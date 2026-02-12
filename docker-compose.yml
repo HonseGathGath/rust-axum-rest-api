@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  # 1. Database
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: rust-axum-rest-api
+    volumes:
+      # CHANGED LINE BELOW:
+      - postgres_data_NEW:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # 2. Rust Backend
+  backend:
+    build: .
+    environment:
+      DATABASE_URL: postgres://postgres:password@db:5432/rust-axum-rest-api
+    depends_on:
+      - db
+
+  # 3. Nginx Reverse Proxy
+  web:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/usr/share/nginx/html:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - backend
+
+volumes:
+  # CHANGED LINE BELOW:
+  postgres_data_NEW:
